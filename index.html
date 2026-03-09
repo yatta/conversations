@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Sunday Intelligence — chee.se</title>
+<meta name="description" content="A conversation about cultural amnesia, the long project of digitization, and what it means to extend the self into the world."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:         #0c0a08;
+  --ink:        #cec7bc;
+  --ink-muted:  #8a8278;
+  --ink-dim:    #524a42;
+  --k:          #c47a3a;
+  --t:          #6b9882;
+  --border:     rgba(255,255,255,0.055);
+  --sidebar-w:  220px;
+
+  --th1-pin: #c47a3a;  --th1-bg: #eed8ae;  --th1-ink: #1e1408;
+  --th2-pin: #4a7a9e;  --th2-bg: #b8cfe0;  --th2-ink: #08151f;
+  --th3-pin: #3d7855;  --th3-bg: #b8d6bc;  --th3-ink: #081a0e;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; font-size: 18px; }
+body {
+  font-family: 'Lora', Georgia, serif;
+  background: var(--bg);
+  color: var(--ink);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content:''; position:fixed; inset:0;
+  pointer-events:none; z-index:9000; opacity:0.038;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:180px;
+}
+
+/* ─── TOP BAR ─── */
+.topbar {
+  position: sticky; top: 0; z-index: 200;
+  background: rgba(12,10,8,0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  display: flex;
+  align-items: stretch;
+  height: 40px;
+}
+.topbar-site {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem; text-transform: uppercase;
+  letter-spacing: 0.2em; color: var(--ink-muted);
+  display: flex; align-items: center;
+  margin-right: auto;
+}
+.thread-pill {
+  display: flex; align-items: center;
+  gap: 0.5rem; padding: 0 1.1rem;
+  cursor: pointer;
+  border-left: 1px solid var(--border);
+  transition: background 0.2s;
+  user-select: none;
+}
+.thread-pill:hover { background: rgba(255,255,255,0.03); }
+.thread-pill.active { background: rgba(255,255,255,0.05); }
+.thread-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  transition: transform 0.25s;
+}
+.thread-pill.active .thread-dot { transform: scale(1.5); }
+.thread-dot.th1 { background: var(--th1-pin); }
+.thread-dot.th2 { background: var(--th2-pin); }
+.thread-dot.th3 { background: var(--th3-pin); }
+.thread-pill-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.62rem; text-transform: uppercase;
+  letter-spacing: 0.14em; color: var(--ink-muted);
+  white-space: nowrap; transition: color 0.2s;
+}
+.thread-pill.active .thread-pill-label { color: var(--ink); }
+
+/* ─── PAGE LAYOUT ─── */
+.page-wrap {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  max-width: 1120px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  position: sticky;
+  top: 40px;
+  height: calc(100vh - 40px);
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  padding: 3rem 0 3rem;
+  scrollbar-width: none;
+}
+.sidebar::-webkit-scrollbar { display: none; }
+
+.sidebar-head {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.62rem; text-transform: uppercase;
+  letter-spacing: 0.25em; color: var(--ink-dim);
+  padding: 0 1.4rem 1.2rem;
+}
+
+.sidebar-thread {
+  margin-bottom: 2rem;
+  opacity: 1;
+  transition: opacity 0.35s ease;
+}
+/* when a different thread is active, fade others */
+body.thread-th1 .sidebar-thread[data-thread="th2"],
+body.thread-th1 .sidebar-thread[data-thread="th3"],
+body.thread-th2 .sidebar-thread[data-thread="th1"],
+body.thread-th2 .sidebar-thread[data-thread="th3"],
+body.thread-th3 .sidebar-thread[data-thread="th1"],
+body.thread-th3 .sidebar-thread[data-thread="th2"] { opacity: 0.25; }
+
+.sidebar-thread-label {
+  display: flex; align-items: center;
+  gap: 0.55rem;
+  padding: 0.4rem 1.4rem;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.5rem; text-transform: uppercase;
+  letter-spacing: 0.18em; color: var(--ink-dim);
+  margin-bottom: 0.4rem;
+}
+.sidebar-items {}
+.sidebar-item {
+  display: block;
+  padding: 0.5rem 1.4rem 0.5rem 2rem;
+  font-family: 'Caveat', cursive;
+  font-size: 1.1rem;
+  line-height: 1.35;
+  color: var(--ink-muted);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  text-decoration: none;
+}
+.sidebar-item:hover { color: var(--ink); background: rgba(255,255,255,0.025); }
+.sidebar-item.th1 { border-left-color: transparent; }
+.sidebar-item.th2 { border-left-color: transparent; }
+.sidebar-item.th3 { border-left-color: transparent; }
+
+body.thread-th1 .sidebar-item.th1 { color: var(--ink); border-left-color: var(--th1-pin); }
+body.thread-th2 .sidebar-item.th2 { color: var(--ink); border-left-color: var(--th2-pin); }
+body.thread-th3 .sidebar-item.th3 { color: var(--ink); border-left-color: var(--th3-pin); }
+
+/* ─── MAIN COLUMN ─── */
+.main-col {
+  min-width: 0;
+  padding: 0 0 0 0;
+}
+
+/* ─── MASTHEAD ─── */
+.masthead {
+  padding: 2.5rem 2.5rem 2rem;
+  display: flex; align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.masthead-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.72rem; color: var(--ink-muted);
+  letter-spacing: 0.2em; text-transform: uppercase;
+}
+.masthead-date {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.68rem; color: var(--ink-dim); letter-spacing: 0.1em;
+}
+
+/* ─── TITLE ─── */
+.title-section { padding: 5rem 2.5rem 3rem; }
+.title-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.56rem; text-transform: uppercase;
+  letter-spacing: 0.35em; color: var(--th1-pin);
+  margin-bottom: 2rem;
+  opacity: 0; animation: fadeUp 0.8s ease 0.1s forwards;
+}
+.title-main {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(3.2rem, 6vw, 6rem);
+  font-weight: 300; line-height: 1.0;
+  letter-spacing: -0.025em; color: var(--ink); margin-bottom: 2rem;
+  opacity: 0; animation: fadeUp 0.8s ease 0.25s forwards;
+}
+.title-main em { font-style: italic; color: #d4a870; }
+.title-sub {
+  font-family: 'Lora', serif;
+  font-size: clamp(1.05rem, 1.6vw, 1.2rem);
+  font-style: italic; color: var(--ink-muted);
+  max-width: 46ch; line-height: 1.75;
+  opacity: 0; animation: fadeUp 0.8s ease 0.4s forwards;
+}
+
+/* ─── SPEAKER KEY ─── */
+.speaker-key {
+  padding: 2rem 2.5rem;
+  display: flex; gap: 2.5rem;
+  border-bottom: 1px solid var(--border);
+  opacity: 0; animation: fadeUp 0.7s ease 0.55s forwards;
+}
+.speaker-entry { display: flex; align-items: baseline; gap: 0.9rem; }
+.speaker-glyph {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem; font-weight: 600; line-height: 1;
+  transition: opacity 0.4s ease;
+}
+.speaker-glyph.k { color: var(--k); }
+.speaker-glyph.t { color: var(--t); }
+.speaker-name {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.55rem; text-transform: uppercase;
+  letter-spacing: 0.18em; color: var(--ink-muted);
+}
+
+/* ─── CONVERSATION ─── */
+.conversation { padding: 0 2.5rem 8rem; }
+
+/* ─── SECTION MARKERS ─── */
+.section-marker {
+  display: flex; align-items: center;
+  gap: 1.2rem; padding: 4.5rem 0 2.2rem;
+  opacity: 0; transition: opacity 0.4s ease;
+}
+.section-marker.visible { animation: fadeUp 0.6s ease forwards; }
+.section-marker-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.7rem; font-style: italic; color: var(--ink-dim);
+}
+.section-marker-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.56rem; text-transform: uppercase;
+  letter-spacing: 0.26em; color: var(--ink-dim);
+}
+.section-marker-line { flex: 1; height: 1px; background: var(--border); }
+.section-threads { display: flex; gap: 4px; }
+
+/* ─── TURNS ─── */
+.turn {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr;
+  gap: 0 1.4rem;
+  margin-bottom: 2.4rem;
+  opacity: 0;
+}
+.turn.visible { animation: fadeUp 0.5s ease forwards; }
+.turn-glyph {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.05rem; font-weight: 600;
+  line-height: 1.82; padding-top: 0.05rem;
+  text-align: right; user-select: none;
+  transition: opacity 0.4s ease;
+}
+.turn-glyph.k { color: var(--k); }
+.turn-glyph.t { color: var(--t); }
+.turn-body {
+  font-size: clamp(1.08rem, 1.5vw, 1.22rem);
+  line-height: 1.82; color: var(--ink);
+}
+
+/* ─── SPANS are the atomic salience units ─── */
+/* Each logical paragraph is a <span class="graf"> with data-th */
+.graf {
+  display: block;
+  margin-bottom: 0.9em;
+  transition: opacity 0.4s ease, color 0.4s ease;
+}
+.graf:last-child { margin-bottom: 0; }
+
+.turn.brief .turn-body { font-style: italic; color: var(--ink-muted); }
+
+/* ─── SALIENCE ─── */
+body.thread-th1 .graf { opacity: 0.15; color: var(--ink-muted); }
+body.thread-th1 .graf.th1 { opacity: 1; color: var(--ink); }
+body.thread-th1 .turn-glyph { opacity: 0.2; }
+body.thread-th1 .turn.has-th1 .turn-glyph { opacity: 1; }
+
+body.thread-th2 .graf { opacity: 0.15; color: var(--ink-muted); }
+body.thread-th2 .graf.th2 { opacity: 1; color: var(--ink); }
+body.thread-th2 .turn-glyph { opacity: 0.2; }
+body.thread-th2 .turn.has-th2 .turn-glyph { opacity: 1; }
+
+body.thread-th3 .graf { opacity: 0.15; color: var(--ink-muted); }
+body.thread-th3 .graf.th3 { opacity: 1; color: var(--ink); }
+body.thread-th3 .turn-glyph { opacity: 0.2; }
+body.thread-th3 .turn.has-th3 .turn-glyph { opacity: 1; }
+
+/* section markers and pullquotes */
+.section-marker { transition: opacity 0.4s ease; }
+body.thread-th1 .section-marker:not(.has-th1) { opacity: 0.18 !important; }
+body.thread-th2 .section-marker:not(.has-th2) { opacity: 0.18 !important; }
+body.thread-th3 .section-marker:not(.has-th3) { opacity: 0.18 !important; }
+
+.pullquote-wrap { transition: opacity 0.4s ease; }
+body.thread-th1 .pullquote-wrap:not(.has-th1) { opacity: 0.18; }
+body.thread-th2 .pullquote-wrap:not(.has-th2) { opacity: 0.18; }
+body.thread-th3 .pullquote-wrap:not(.has-th3) { opacity: 0.18; }
+
+/* ─── ANNOTATIONS ─── */
+.ann {
+  border-bottom: 1px dotted;
+  cursor: pointer; transition: opacity 0.15s; display: inline;
+}
+.ann.th1 { color: var(--th1-pin); border-bottom-color: var(--th1-pin); }
+.ann.th2 { color: var(--th2-pin); border-bottom-color: var(--th2-pin); }
+.ann.th3 { color: var(--th3-pin); border-bottom-color: var(--th3-pin); }
+.ann:hover { opacity: 0.7; }
+
+/* ─── POST-ITS ─── */
+.postit {
+  display: none;
+  position: relative;
+  margin: 0.8rem 0 0.4rem;
+  max-width: 440px;
+  padding: 1.4rem 1.5rem;
+  font-family: 'Caveat', cursive;
+  font-size: 1.18rem;
+  line-height: 1.6;
+  box-shadow: 2px 5px 22px rgba(0,0,0,0.65), 0 1px 3px rgba(0,0,0,0.3);
+}
+.postit.open { display: block; animation: postitOpen 0.2s ease forwards; }
+.postit.th1 { background: var(--th1-bg); color: var(--th1-ink); transform: rotate(-1.1deg); }
+.postit.th2 { background: var(--th2-bg); color: var(--th2-ink); transform: rotate(0.7deg); }
+.postit.th3 { background: var(--th3-bg); color: var(--th3-ink); transform: rotate(-0.6deg); }
+.postit::before {
+  content: ''; position: absolute;
+  top: -5px; left: 50%; transform: translateX(-50%);
+  width: 10px; height: 10px; border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+.postit::after {
+  content: ''; position: absolute; bottom:0; right:0;
+  width:0; height:0; border-style:solid; border-width: 0 0 16px 16px; opacity:0.2;
+}
+.postit.th1::before { background: var(--th1-pin); }
+.postit.th2::before { background: var(--th2-pin); }
+.postit.th3::before { background: var(--th3-pin); }
+.postit.th1::after { border-color: transparent transparent #9a6820 transparent; }
+.postit.th2::after { border-color: transparent transparent #2a5070 transparent; }
+.postit.th3::after { border-color: transparent transparent #1e5535 transparent; }
+.postit-title { font-weight: 600; font-size: 1.28rem; margin-bottom: 0.6rem; display: block; }
+.postit-close {
+  position: absolute; top: 0.65rem; right: 0.85rem;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.52rem; text-transform: uppercase;
+  letter-spacing: 0.1em; opacity: 0.55; cursor: pointer; color: inherit;
+}
+.postit-close:hover { opacity: 1; }
+.postit-ref { display: block; margin-top: 0.75rem; font-size: 0.9rem; opacity: 0.6; font-style: italic; }
+.postit-thread {
+  display: inline-block; font-family: 'Space Mono', monospace;
+  font-size: 0.5rem; text-transform: uppercase;
+  letter-spacing: 0.18em; opacity: 0.55; margin-bottom: 0.45rem;
+}
+
+/* ─── DIAGRAM ─── */
+.diagram-wrap { padding: 2rem 0 2.5rem; opacity: 0; transition: opacity 0.4s ease; }
+.diagram-wrap.visible { animation: fadeUp 0.7s ease forwards; }
+.diagram-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem; text-transform: uppercase;
+  letter-spacing: 0.28em; color: var(--ink-dim); margin-bottom: 1.2rem;
+}
+
+/* ─── PULL QUOTES ─── */
+.pullquote-wrap { padding: 3rem 0; opacity: 0; }
+.pullquote-wrap.visible { animation: fadeUp 0.7s ease forwards; }
+.pullquote {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.45rem, 3vw, 2.4rem);
+  font-weight: 300; font-style: italic;
+  line-height: 1.3; color: var(--ink);
+  border-left: 1px solid #b89a5a;
+  padding-left: 1.8rem; max-width: 30ch;
+}
+.pullquote-attr {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem; text-transform: uppercase;
+  letter-spacing: 0.22em; color: var(--ink-dim);
+  margin-top: 1.1rem; padding-left: 1.8rem;
+}
+
+/* ─── THESIS ─── */
+.thesis-surface {
+  margin: 3.5rem 0 2rem; padding: 2.5rem;
+  border: 1px solid var(--border); position: relative;
+  opacity: 0; transition: opacity 0.4s ease;
+}
+.thesis-surface.visible { animation: fadeUp 0.8s ease forwards; }
+.thesis-surface::before {
+  content: 'Organizing Frame';
+  position: absolute; top: -0.58rem; left: 1.8rem;
+  padding: 0 0.7rem; background: var(--bg);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem; text-transform: uppercase;
+  letter-spacing: 0.28em; color: var(--ink-dim);
+}
+.thesis-step {
+  display: grid; grid-template-columns: 1.8rem 1fr;
+  gap: 0 1.1rem; padding: 0.85rem 0;
+  border-bottom: 1px solid var(--border); opacity: 0;
+}
+.thesis-step:last-child { border-bottom: none; }
+.thesis-step.visible { animation: fadeUp 0.5s ease forwards; }
+.thesis-step-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.9rem; font-style: italic;
+  color: var(--ink-dim); padding-top: 0.15rem; text-align: right;
+}
+.thesis-step-text {
+  font-family: 'Lora', serif;
+  font-size: 1.05rem; line-height: 1.65; color: var(--ink-muted);
+}
+.thesis-step-text strong { color: var(--ink); font-weight: 500; }
+.thesis-open {
+  margin-top: 2.2rem; padding-top: 1.4rem;
+  border-top: 1px solid var(--border);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.2rem, 2vw, 1.6rem);
+  font-style: italic; font-weight: 300;
+  color: #d4a870; line-height: 1.5;
+}
+
+/* ─── CLOSING ─── */
+.closing { padding: 4rem 0 2rem; text-align: center; opacity: 0; }
+.closing.visible { animation: fadeUp 0.8s ease forwards; }
+.closing-mark { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; color: var(--ink-dim); display: block; margin-bottom: 2rem; }
+.closing-line { width: 45px; height: 1px; background: var(--border); margin: 0 auto 2rem; }
+.closing-note { font-family: 'Space Mono', monospace; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.2em; color: var(--ink-dim); line-height: 2.2; }
+
+/* ─── FOOTER ─── */
+footer {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--border);
+  padding: 1.6rem 2rem;
+  display: flex; justify-content: space-between; align-items: center;
+  max-width: 1120px; margin: 0 auto; width: 100%;
+}
+footer span { font-family: 'Space Mono', monospace; font-size: 0.5rem; color: var(--ink-dim); letter-spacing: 0.14em; text-transform: uppercase; }
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(14px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+@keyframes postitOpen {
+  from { opacity:0; }
+  to   { opacity:1; }
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 760px) {
+  .page-wrap { grid-template-columns: 1fr; }
+  .sidebar {
+    position: static; height: auto;
+    border-right: none; border-bottom: 1px solid var(--border);
+    padding: 1.5rem 0 1rem;
+    display: flex; overflow-x: auto; gap: 0;
+  }
+  .sidebar-head { display: none; }
+  .sidebar-thread { margin: 0; display: flex; flex-direction: column; flex-shrink: 0; }
+  .sidebar-thread-label { padding: 0 1rem 0.3rem; }
+  .sidebar-items { display: flex; }
+  .sidebar-item { padding: 0.3rem 0.8rem; white-space: nowrap; border-left: none; border-bottom: 2px solid transparent; }
+  body.thread-th1 .sidebar-item.th1 { border-bottom-color: var(--th1-pin); border-left-color: transparent; }
+  body.thread-th2 .sidebar-item.th2 { border-bottom-color: var(--th2-pin); border-left-color: transparent; }
+  body.thread-th3 .sidebar-item.th3 { border-bottom-color: var(--th3-pin); border-left-color: transparent; }
+  .conversation, .masthead, .title-section, .speaker-key { padding-left: 1.3rem; padding-right: 1.3rem; }
+  .turn { grid-template-columns: 1.8rem 1fr; gap: 0 0.85rem; }
+  .thread-pill-label { display: none; }
+  .thread-pill { padding: 0 0.75rem; }
+  footer { padding: 1.4rem 1.3rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ─── TOP BAR ─── -->
+<div class="topbar">
+  <span class="topbar-site">chee.se</span>
+  <div class="thread-pill" data-thread="th1">
+    <span class="thread-dot th1"></span>
+    <span class="thread-pill-label">Distributed Intelligence</span>
+  </div>
+  <div class="thread-pill" data-thread="th2">
+    <span class="thread-dot th2"></span>
+    <span class="thread-pill-label">Institutional Power</span>
+  </div>
+  <div class="thread-pill" data-thread="th3">
+    <span class="thread-dot th3"></span>
+    <span class="thread-pill-label">Representation &amp; Resolution</span>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-head">Reading threads</div>
+
+    <div class="sidebar-thread" data-thread="th1">
+      <div class="sidebar-thread-label">
+        <span class="thread-dot th1"></span>
+        <span style="font-family:'Space Mono',monospace;font-size:0.46rem;text-transform:uppercase;letter-spacing:0.18em;color:var(--ink-dim)">Distributed Intelligence</span>
+      </div>
+      <div class="sidebar-items">
+        <a class="sidebar-item th1" href="#ann-dogs">dogs as our first computer</a>
+        <a class="sidebar-item th1" href="#ann-ant">actor-network theory</a>
+        <a class="sidebar-item th1" href="#t-ai-extension">AI is an extension of us</a>
+        <a class="sidebar-item th1" href="#ann-watts">Alan Watts on separation</a>
+        <a class="sidebar-item th1" href="#t-delanda">DeLanda on difference</a>
+      </div>
+    </div>
+
+    <div class="sidebar-thread" data-thread="th2">
+      <div class="sidebar-thread-label">
+        <span class="thread-dot th2"></span>
+        <span style="font-family:'Space Mono',monospace;font-size:0.46rem;text-transform:uppercase;letter-spacing:0.18em;color:var(--ink-dim)">Institutional Power</span>
+      </div>
+      <div class="sidebar-items">
+        <a class="sidebar-item th2" href="#ann-mumford">Lewis Mumford / pyramids</a>
+        <a class="sidebar-item th2" href="#ann-accumulation">intelligence at scale</a>
+        <a class="sidebar-item th2" href="#t-corp-rebellious">corporation as rebellion</a>
+        <a class="sidebar-item th2" href="#ann-communities">communities as extension</a>
+        <a class="sidebar-item th2" href="#t-network-unit">the network is the unit</a>
+      </div>
+    </div>
+
+    <div class="sidebar-thread" data-thread="th3">
+      <div class="sidebar-thread-label">
+        <span class="thread-dot th3"></span>
+        <span style="font-family:'Space Mono',monospace;font-size:0.46rem;text-transform:uppercase;letter-spacing:0.18em;color:var(--ink-dim)">Representation &amp; Resolution</span>
+      </div>
+      <div class="sidebar-items">
+        <a class="sidebar-item th3" href="#ann-amnesia">cultural amnesia</a>
+        <a class="sidebar-item th3" href="#t-hallucination">hallucination as memory problem</a>
+        <a class="sidebar-item th3" href="#ann-lowpoly">low resolution / low poly</a>
+        <a class="sidebar-item th3" href="#ann-sql">SQL-shaped identity</a>
+        <a class="sidebar-item th3" href="#ann-arbitrage">gap arbitrage</a>
+        <a class="sidebar-item th3" href="#t-despair">despair as delay</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <main class="main-col">
+    <div class="masthead">
+      <span class="masthead-title">Conversation No. 001</span>
+      <span class="masthead-date">Sunday, March 8, 2026 · Berkeley</span>
+    </div>
+
+    <div class="title-section">
+      <div class="title-label">chee.se</div>
+      <h1 class="title-main">On <em>Intelligence</em><br>and Extension</h1>
+      <p class="title-sub">A Sunday morning conversation about cultural amnesia, the long project of digitization, and what it means to extend the self into the world.</p>
+    </div>
+
+    <div class="speaker-key">
+      <div class="speaker-entry">
+        <span class="speaker-glyph k">K</span>
+        <span class="speaker-name">Kenyatta Cheese</span>
+      </div>
+      <div class="speaker-entry">
+        <span class="speaker-glyph t">T</span>
+        <span class="speaker-name">Tricia Wang</span>
+      </div>
+    </div>
+
+    <div class="conversation">
+
+      <!-- ── I: AMNESIA ── -->
+      <div class="section-marker has-th1 has-th3">
+        <span class="section-marker-num">I</span>
+        <span class="section-marker-label">Amnesia</span>
+        <span class="section-marker-line"></span>
+        <div class="section-threads">
+          <span class="thread-dot th1"></span>
+          <span class="thread-dot th3"></span>
+        </div>
+      </div>
+
+      <div class="turn has-th1 has-th3">
+        <span class="turn-glyph k">K</span>
+        <div class="turn-body">
+          <span id="ann-amnesia" class="graf th3">The reason we have <span class="ann th3" data-id="postit-amnesia">cultural amnesia</span> right now — across so many parts of society — is that we're digitizing so much. We're externalizing things we usually call thought or cognition. And so we don't remember to look back to understand where what we're experiencing connects to what happened before.</span>
+
+          <div class="postit th3" id="postit-amnesia">
+            <span class="postit-close" onclick="closeCard('postit-amnesia')">close ×</span>
+            <span class="postit-thread">Thread III — Representation</span>
+            <span class="postit-title">Cultural Amnesia &amp; Tertiary Retention</span>
+            Bernard Stiegler: when memory is offloaded into technical objects — books, recordings, databases — we gain cognitive reach while losing the interior synthesis that makes knowledge ours. We've externalized the repository without replacing the trigger that connects it to lived experience.
+            <span class="postit-ref">→ Stiegler, Technics and Time (1998)</span>
+          </div>
+
+          <span class="graf th3">It shows up two ways: nostalgia — the sense that things were better before — or a sense that there's a better way ahead, without being able to explain where that comes from. Neither comes from nowhere. There's a connection to where thought has been. We just haven't lined up the evidence.</span>
+
+          <span id="t-hallucination" class="graf th1 th3">This is why hallucination isn't primarily an accuracy problem. It's a verification and memory problem. In oral cultures, the elder wasn't just a repository — they were a <em>live correction system</em>. We've externalized the repository without replacing the trigger.</span>
+        </div>
+      </div>
+
+      <!-- ── II: THE LONG LINEAGE ── -->
+      <div class="section-marker has-th1 has-th2">
+        <span class="section-marker-num">II</span>
+        <span class="section-marker-label">The Long Lineage</span>
+        <span class="section-marker-line"></span>
+        <div class="section-threads">
+          <span class="thread-dot th1"></span>
+          <span class="thread-dot th2"></span>
+        </div>
+      </div>
+
+      <div class="turn has-th1">
+        <span class="turn-glyph t">T</span>
+        <div class="turn-body">
+          <span id="ann-dogs" class="graf th1">This is why I'm interested in intelligence. And why I've always seen <span class="ann th1" data-id="postit-dogs">dogs as our first computer.</span> Every time we've been able to externalize our intelligence, there have been big shifts in how we see ourselves and act on the world — and how the world acts on us too.</span>
+
+          <div class="postit th1" id="postit-dogs">
+            <span class="postit-close" onclick="closeCard('postit-dogs')">close ×</span>
+            <span class="postit-thread">Thread I — Distributed Intelligence</span>
+            <span class="postit-title">Dogs as First Computer</span>
+            The domesticated dog as cognitive prosthetic — extending human sensory and tracking range before any other technology. Its trainability as programmability. What the dog made possible was a qualitative shift in what humans could do with the same body. Each subsequent externalization follows the same structure.
+          </div>
+        </div>
+      </div>
+
+      <div class="turn has-th1 has-th2">
+        <span class="turn-glyph k">K</span>
+        <div class="turn-body">
+          <span class="graf th2">And the shift in how we derive meaning from it. In the past, the ability to extend into other people was connected to concepts of self — in interesting ways and weird ways. Tribalism. The sense that some people are more person than others.</span>
+
+          <span id="ann-mumford" class="graf th2"><span class="ann th2" data-id="postit-mumford">Lewis Mumford</span>, in <em>Technics</em>, talks about how the point of the pyramids wasn't the pyramids. The pharaoh had enough power to extend his own desire into his people, his army — and create bureaucracy and systems to build something that large. The architecture was the expression of reach. The message to other rulers: if they could organize at that scale, you didn't want to find out what else they could do.</span>
+
+          <div class="postit th2" id="postit-mumford">
+            <span class="postit-close" onclick="closeCard('postit-mumford')">close ×</span>
+            <span class="postit-thread">Thread II — Institutional Power</span>
+            <span class="postit-title">Mumford — The Megamachine</span>
+            Technics and Human Development (1966). Organized human labor — soldiers, priests, scribes — was the first true machine. The pyramid was not built by machines; it <em>was</em> the machine. Power is the ability to extend your will through other bodies at scale.
+            <span class="postit-ref">→ Mumford, Myth of the Machine Vol. I</span>
+          </div>
+
+          <span id="ann-ant" class="graf th1">I'd separate the capacity into three registers: the ability to act upon the world, the ability to extend cognition, and the sense of meaning. They're related but distinct. <span class="ann th1" data-id="postit-ant">Actor-network theory</span> gets at something here — the non-human as full participant. Timothy Morton takes it further: drop the distinction between biological and non-biological entirely. Not as metaphor but as ontology.</span>
+
+          <div class="postit th1" id="postit-ant">
+            <span class="postit-close" onclick="closeCard('postit-ant')">close ×</span>
+            <span class="postit-thread">Thread I — Distributed Intelligence</span>
+            <span class="postit-title">ANT → The Mesh</span>
+            Latour's ANT: non-humans — objects, technologies, microbes — are full actors, not passive instruments. Morton's dark ecology: the entanglement of all life and matter with no outside, no clean observer/observed split. Intelligence was never only human. Dogs, fire, writing, corporations, AI — the same kind of thing at different scales.
+            <span class="postit-ref">→ Latour, Reassembling the Social / Morton, Ecology Without Nature</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="turn has-th1 has-th2">
+        <span class="turn-glyph t">T</span>
+        <div class="turn-body">
+          <span id="ann-accumulation" class="graf th2">Church, state, corporation — all systems for <span class="ann th2" data-id="postit-accumulation">accumulating and coordinating intelligence at scale.</span> What's different now is that these capabilities may be shifting toward individuals rather than institutions.</span>
+
+          <div class="postit th2" id="postit-accumulation">
+            <span class="postit-close" onclick="closeCard('postit-accumulation')">close ×</span>
+            <span class="postit-thread">Thread II — Institutional Power</span>
+            <span class="postit-title">IP as Intelligence Capital</span>
+            What firms actually do is accumulate, organize, and redeploy knowledge. The corporation isn't primarily a production machine — it's an intelligence machine. Patent law and trade secrecy are infrastructure for keeping that intelligence from migrating. The question: what happens when individuals can do this independently?
+          </div>
+
+          <span class="graf th1">Those who approach technology as users — which is how we've been trained — versus those who can extend themselves through it. Those are different positions in history.</span>
+        </div>
+      </div>
+
+      <!-- DIAGRAM -->
+      <div class="diagram-wrap has-th1 has-th2">
+        <div class="diagram-label">The extension lineage</div>
+        <svg viewBox="0 0 760 180" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;overflow:visible;">
+          <defs>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+              <path d="M0,0 L0,8 L8,4 z" fill="rgba(150,135,115,0.8)"/>
+            </marker>
+          </defs>
+          <!-- connecting spine -->
+          <line x1="50" y1="80" x2="710" y2="80" stroke="rgba(80,68,52,0.7)" stroke-width="1.5" stroke-dasharray="4,5"/>
+          <g font-family="Caveat, cursive" text-anchor="middle">
+            <!-- dog -->
+            <circle cx="50" cy="80" r="34" fill="rgba(196,122,58,0.15)" stroke="rgba(196,122,58,0.55)" stroke-width="1.5"/>
+            <text x="50" y="76" font-size="17" fill="#d4a060" font-weight="600">dog</text>
+            <text x="50" y="125" font-size="13" fill="#8a7a62">−12,000 BCE</text>
+
+            <!-- writing -->
+            <circle cx="195" cy="80" r="34" fill="rgba(196,122,58,0.15)" stroke="rgba(196,122,58,0.55)" stroke-width="1.5"/>
+            <text x="195" y="76" font-size="17" fill="#d4a060" font-weight="600">writing</text>
+            <text x="195" y="125" font-size="13" fill="#8a7a62">−3,200 BCE</text>
+
+            <!-- church / state -->
+            <circle cx="355" cy="80" r="38" fill="rgba(91,138,170,0.15)" stroke="rgba(91,138,170,0.6)" stroke-width="1.5"/>
+            <text x="355" y="73" font-size="16" fill="#90b8d4" font-weight="600">church</text>
+            <text x="355" y="92" font-size="16" fill="#90b8d4" font-weight="600">/ state</text>
+            <text x="355" y="132" font-size="13" fill="#8a7a62">medieval→</text>
+
+            <!-- corporation -->
+            <circle cx="530" cy="80" r="38" fill="rgba(91,138,170,0.15)" stroke="rgba(91,138,170,0.6)" stroke-width="1.5"/>
+            <text x="530" y="76" font-size="16" fill="#90b8d4" font-weight="600">corporation</text>
+            <text x="530" y="130" font-size="13" fill="#8a7a62">1600s →</text>
+
+            <!-- AI / individual -->
+            <circle cx="710" cy="80" r="44" fill="rgba(90,138,104,0.15)" stroke="rgba(90,138,104,0.65)" stroke-width="2" stroke-dasharray="5,4"/>
+            <text x="710" y="73" font-size="16" fill="#88c4a0" font-weight="600">AI /</text>
+            <text x="710" y="92" font-size="16" fill="#88c4a0" font-weight="600">individual</text>
+            <text x="710" y="138" font-size="13" fill="#8a7a62">now?</text>
+          </g>
+          <!-- arrows -->
+          <line x1="85" y1="80" x2="157" y2="80" stroke="rgba(150,130,100,0.6)" stroke-width="1.5" marker-end="url(#arr)"/>
+          <line x1="230" y1="80" x2="314" y2="80" stroke="rgba(150,130,100,0.6)" stroke-width="1.5" marker-end="url(#arr)"/>
+          <line x1="394" y1="80" x2="488" y2="80" stroke="rgba(150,130,100,0.6)" stroke-width="1.5" marker-end="url(#arr)"/>
+          <line x1="569" y1="80" x2="663" y2="80" stroke="rgba(150,130,100,0.6)" stroke-width="1.5" marker-end="url(#arr)"/>
+          <!-- caption -->
+          <text x="380" y="168" font-family="Space Mono, monospace" font-size="9.5" fill="rgba(100,88,70,0.9)" text-anchor="middle" letter-spacing="2.5">EACH STAGE SHIFTS WHO CAN EXTEND THEMSELVES</text>
+        </svg>
+      </div>
+
+      <!-- ── III: LOW RESOLUTION ── -->
+      <div class="section-marker has-th3">
+        <span class="section-marker-num">III</span>
+        <span class="section-marker-label">Low Resolution</span>
+        <span class="section-marker-line"></span>
+        <div class="section-threads"><span class="thread-dot th3"></span></div>
+      </div>
+
+      <div class="turn has-th3">
+        <span class="turn-glyph k">K</span>
+        <div class="turn-body">
+          <span id="ann-lowpoly" class="graf th3">Digitization is a giant project to represent the world in software, and it is much harder than we realize. We're going to do it at <span class="ann th3" data-id="postit-lowpoly">low resolution. Low poly.</span> Everything. And we have to figure out how to make the resolution higher, and higher again. But in the meantime, if we're telling people they have to use it — they're going to get frustrated. That frustration is signal, not noise.</span>
+
+          <div class="postit th3" id="postit-lowpoly">
+            <span class="postit-close" onclick="closeCard('postit-lowpoly')">close ×</span>
+            <span class="postit-thread">Thread III — Representation</span>
+            <span class="postit-title">The Low-Resolution Frame</span>
+            Early 3D graphics used polygon meshes to approximate organic forms — functional but obviously incomplete. You could sense what it was while feeling the wrongness of it. Applied to digital representations of social reality: functional enough to act on, insufficient enough to distort. The gap is the permanent condition of the project, not a temporary bug.
+          </div>
+
+          <span class="graf th3">The early web bank: you could make one, but it would be worse than a real bank in every security dimension. Everything the physical world had built up over centuries wasn't there. It takes a generation to find the equivalents. Multiply that across all of social life.</span>
+
+          <span id="ann-sql" class="graf th3">We built social networks so low-resolution compared to our actual relationships that we had to reduce identity to: are you in a relationship or not? Male or female? This culture or that? <span class="ann th3" data-id="postit-sql">A system that does nothing but sort people into SQL-shaped boxes</span> became our primary way of interacting — which meant we emphasized the divisions — which meant we think other humans are bad. Not because of malice. Because of fidelity.</span>
+
+          <div class="postit th3" id="postit-sql">
+            <span class="postit-close" onclick="closeCard('postit-sql')">close ×</span>
+            <span class="postit-thread">Thread III — Representation</span>
+            <span class="postit-title">The Schema as Politics</span>
+            A relational database requires discrete, non-overlapping fields. The schema is not neutral: it encodes what distinctions matter and what continuities get flattened. James Scott's <em>Seeing Like a State</em>: legibility to administrators requires simplifications that destroy local complexity. The platform can only govern what it can see. It can only see what has been reduced to a processable form.
+            <span class="postit-ref">→ Scott, Seeing Like a State (1998)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="turn has-th3">
+        <span class="turn-glyph t">T</span>
+        <div class="turn-body">
+          <span class="graf th3">The male/female sorting connects to chicken sexing — we create systems for seeing the world, and anything that doesn't fit gets discarded or classified as abnormal. We absorbed social media carrying the industrial way of seeing. The residue is still in the system. And we have a chance right now to redesign that.</span>
+        </div>
+      </div>
+
+      <!-- ── IV: DESPAIR AS DELAY ── -->
+      <div class="section-marker has-th1 has-th3">
+        <span class="section-marker-num">IV</span>
+        <span class="section-marker-label">Despair as Delay</span>
+        <span class="section-marker-line"></span>
+        <div class="section-threads">
+          <span class="thread-dot th1"></span>
+          <span class="thread-dot th3"></span>
+        </div>
+      </div>
+
+      <div class="turn has-th1" id="t-ai-extension">
+        <span class="turn-glyph t">T</span>
+        <div class="turn-body">
+          <span class="graf th1">I see a piece I need to write. AI is not separate from us. It is an extension of us. It is a part of us. And once we start to see that, we'll have a different mindset.</span>
+        </div>
+      </div>
+
+      <div class="turn brief has-th1">
+        <span class="turn-glyph k">K</span>
+        <div class="turn-body">
+          <span class="graf th1">That's what I'm going to say to my team this week.</span>
+        </div>
+      </div>
+
+      <div class="turn brief has-th1">
+        <span class="turn-glyph t">T</span>
+        <div class="turn-body">
+          <span class="graf th1">Then we should figure out how to write the same thing in two different ways.</span>
+        </div>
+      </div>
+
+      <div class="turn has-th3">
+        <span class="turn-glyph k">K</span>
+        <div class="turn-body">
+          <span id="t-despair" class="graf th3">The despair is a disconnection. There's going to be a gap between what we think the world is and what our tools can represent — and that gap is a space of despair. But the despair is because it's a <em>delay</em>. Not because it's wrong. Not because it's irreversible.</span>
+
+          <span id="ann-arbitrage" class="graf th3">In the meantime, people jump into those spaces to create <span class="ann th3" data-id="postit-arbitrage">points of arbitrage and exploit them.</span> A lot of the misinformation and disinformation in elections and through the pandemic wasn't nation-states doing evil things. It was kids in Eastern Europe and Southeast Asia running affiliate blogs — exploiting the gap between what we expected the world to look like and the low-resolution version that was actually there. A structural explanation, not a moral one.</span>
+
+          <div class="postit th3" id="postit-arbitrage">
+            <span class="postit-close" onclick="closeCard('postit-arbitrage')">close ×</span>
+            <span class="postit-thread">Thread III — Representation</span>
+            <span class="postit-title">Gap Arbitrage</span>
+            Every mismatch between representation and reality creates an exploitable delta. Early-web fraud exploited missing security layers. Disinformation exploited missing verification infrastructure. The moral framing ("bad actors") is accurate but explanatorily weak — it doesn't predict where exploitation emerges next. The resolution frame does.
+          </div>
+
+          <span class="graf th3">What would help is verification — proof of control, the institutional memory equivalent. That takes care of one layer. But there are dozens more layers that haven't been built yet. The hope isn't in resolving the gap. The hope is in reframing the problem — understanding despair as signal rather than conclusion.</span>
+        </div>
+      </div>
+
+      <!-- ── V: CONNECTION AND DIFFERENCE ── -->
+      <div class="section-marker has-th1 has-th2">
+        <span class="section-marker-num">V</span>
+        <span class="section-marker-label">Connection and Difference</span>
+        <span class="section-marker-line"></span>
+        <div class="section-threads">
+          <span class="thread-dot th1"></span>
+          <span class="thread-dot th2"></span>
+        </div>
+      </div>
+
+      <div class="turn has-th1">
+        <span class="turn-glyph t">T</span>
+        <div class="turn-body">
+          <span id="ann-watts" class="graf th1"><span class="ann th1" data-id="postit-watts">Alan Watts on separation</span> — the original sin of Western thought: experiencing the self as a skin-encapsulated ego, discrete and opposed to the world. Apart from AI, from tech, from society, from nature, from each other. That disconnection is the distortion everything else runs through.</span>
+
+          <div class="postit th1" id="postit-watts">
+            <span class="postit-close" onclick="closeCard('postit-watts')">close ×</span>
+            <span class="postit-thread">Thread I — Distributed Intelligence</span>
+            <span class="postit-title">Watts + DeLanda — Unity and Difference</span>
+            Watts (Zen, Vedanta): the fundamental error is the skin-encapsulated ego. — DeLanda (Deleuze): heterogeneity — the non-reducible properties of each component — is what makes assemblages dynamic. Not: we are all the same. But: the difference is what generates capacity. Read together, not as a choice between them.
+            <span class="postit-ref">→ DeLanda, A New Philosophy of Society (2006)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="turn has-th1" id="t-delanda">
+        <span class="turn-glyph k">K</span>
+        <div class="turn-body">
+          <span class="graf th1">DeLanda is doing something different. He's saying: focus on the difference, because <em>together</em>, the difference is the important part. It's not that we're all the same. It's that heterogeneity is where the system's capacity comes from. You need both read together — one's spiritual and one's philosophical, but they're making the same argument from opposite directions.</span>
+        </div>
+      </div>
+
+      <div class="pullquote-wrap has-th1 has-th2">
+        <div class="pullquote">By separating things out in order to understand them, we actually lose the point. The point is situated in the relation.</div>
+        <div class="pullquote-attr">K</div>
+      </div>
+
+      <div class="turn has-th1 has-th2">
+        <span class="turn-glyph k">K</span>
+        <div class="turn-body">
+          <span id="ann-communities" class="graf th2">Which connects to <span class="ann th2" data-id="postit-communities">communities as a form of extension</span> we haven't talked about. Families. Neighborhoods. Not the institutional forms — church, state, corporation — but the informal ones. Gun research in Chicago and LA showed that gangs don't actually have many guns. They treat the gun as a social object that circulates through a network based on what job needs doing. What legislators are trying to regulate is situated in a network. The legislation doesn't account for that.</span>
+
+          <div class="postit th2" id="postit-communities">
+            <span class="postit-close" onclick="closeCard('postit-communities')">close ×</span>
+            <span class="postit-thread">Thread II — Institutional Power</span>
+            <span class="postit-title">Informal Extension Networks</span>
+            The formal taxonomy misses the primary forms: family, neighborhood, mutual aid, gang, congregation, crew. These are also megamachines — coordinated bodies extending individual capacity — but without legible structure, they're invisible to policy and to theory. The state can only regulate what it can see. The network doesn't fit the schema.
+          </div>
+
+          <span id="t-network-unit" class="graf th2">The object isn't the unit. The network is the unit.</span>
+
+          <span id="t-corp-rebellious" class="graf th1 th2">The expectation in California law is that there's only one form of protection: the state. That you aren't your community and you aren't your state. But if you apply the concept Tricia is building — the extension of the self through networks — it reorients you toward all these things we've been treating as separate concepts. By separating them out, we actually lose the point.</span>
+        </div>
+      </div>
+
+      <!-- ── THESIS ── -->
+      <div class="thesis-surface">
+        <div class="thesis-arc">
+          <div class="thesis-step">
+            <span class="thesis-step-num">1</span>
+            <span class="thesis-step-text"><strong>Intelligence has always been distributed</strong> across networks of humans, animals, and tools — never located only inside individual minds.</span>
+          </div>
+          <div class="thesis-step">
+            <span class="thesis-step-num">2</span>
+            <span class="thesis-step-text"><strong>Institutions historically concentrated</strong> that distributed intelligence — church, state, corporation each did this in turn, shifting who could act at scale.</span>
+          </div>
+          <div class="thesis-step">
+            <span class="thesis-step-num">3</span>
+            <span class="thesis-step-text"><strong>Digitization dramatically extends</strong> this externalization but currently operates at low fidelity — the world is being encoded faster than it can be understood.</span>
+          </div>
+          <div class="thesis-step">
+            <span class="thesis-step-num">4</span>
+            <span class="thesis-step-text"><strong>The gap between reality and representation</strong> produces confusion, exploitation, and cultural amnesia — despair as delay, not as diagnosis.</span>
+          </div>
+          <div class="thesis-step">
+            <span class="thesis-step-num">5</span>
+            <span class="thesis-step-text"><strong>AI may be the moment the distribution becomes legible to itself</strong> — not a departure from human cognition, but an extension finally becoming visible as such.</span>
+          </div>
+        </div>
+        <div class="thesis-open">
+          "If intelligence has always been distributed across networks, then AI isn't a departure.<br>It's the moment the network becomes aware of its own architecture."
+        </div>
+      </div>
+
+      <div class="closing">
+        <span class="closing-mark">∎</span>
+        <div class="closing-line"></div>
+        <p class="closing-note">
+          Berkeley, California — March 2026<br><br>
+          This conversation was lightly edited from a recorded exchange.<br>
+          Annotations are expansions, not corrections.<br>
+          Threads are reading lenses, not arguments.
+        </p>
+      </div>
+
+    </div><!-- /conversation -->
+  </main>
+
+</div><!-- /page-wrap -->
+
+<footer>
+  <span>chee.se</span>
+  <span>Conversations on intelligence &amp; extension</span>
+</footer>
+
+<script>
+// ── ANNOTATION TOGGLE ──
+document.querySelectorAll('.ann').forEach(el => {
+  el.addEventListener('click', e => {
+    e.stopPropagation();
+    const id = el.dataset.id;
+    const card = document.getElementById(id);
+    if (!card) return;
+    const isOpen = card.classList.contains('open');
+    document.querySelectorAll('.postit.open').forEach(c => c.classList.remove('open'));
+    if (!isOpen) {
+      card.classList.add('open');
+      // insert after the .graf span that contains this trigger
+      const graf = el.closest('.graf');
+      if (graf) graf.after(card);
+    }
+  });
+});
+
+function closeCard(id) {
+  const c = document.getElementById(id);
+  if (c) c.classList.remove('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.postit') && !e.target.closest('.ann')) {
+    document.querySelectorAll('.postit.open').forEach(c => c.classList.remove('open'));
+  }
+});
+
+// ── THREAD SALIENCE ──
+let activeThread = null;
+
+function setThread(thread) {
+  document.body.classList.remove('thread-th1', 'thread-th2', 'thread-th3');
+  document.querySelectorAll('.thread-pill').forEach(p => p.classList.remove('active'));
+  if (thread) {
+    document.body.classList.add(thread);
+    document.querySelectorAll(`.thread-pill[data-thread="${thread}"]`).forEach(p => p.classList.add('active'));
+  }
+  activeThread = thread;
+}
+
+document.querySelectorAll('.thread-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    const thread = pill.dataset.thread;
+    setThread(activeThread === thread ? null : thread);
+  });
+});
+
+// sidebar items activate their thread AND scroll
+document.querySelectorAll('.sidebar-item').forEach(item => {
+  item.addEventListener('click', e => {
+    // determine which thread this item belongs to
+    const threadClass = ['th1','th2','th3'].find(t => item.classList.contains(t));
+    if (threadClass) setThread(activeThread === threadClass ? null : threadClass);
+    // let the href scroll happen naturally
+  });
+});
+
+// ── SCROLL REVEAL ──
+const revealEls = document.querySelectorAll(
+  '.turn, .section-marker, .pullquote-wrap, .closing, .diagram-wrap, .thesis-step, .thesis-surface'
+);
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const el = entry.target;
+      const delay = parseInt(el.dataset.delay) || 0;
+      setTimeout(() => el.classList.add('visible'), delay);
+      io.unobserve(el);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+
+let ti = 0;
+revealEls.forEach(el => {
+  if (el.classList.contains('turn')) { el.dataset.delay = (ti++ % 4) * 70; }
+  io.observe(el);
+});
+document.querySelectorAll('.thesis-step').forEach((el, i) => { el.dataset.delay = i * 90; });
+</script>
+</body>
+</html>
