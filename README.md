@@ -107,14 +107,14 @@ Each annotation is an expansion, not a correction — a post-it that opens a doo
 Ask Claude to build the HTML. The spec:
 
 - Single self-contained `.html` file (no external dependencies except Google Fonts)
-- Dark background, serif body text, monospace metadata, handwriting font for annotations
+- Visual design should fit the content — see `for-claude.md` for how to find the right look and feel
 - Sidebar with thread-organized key phrases as scroll-links
 - Thread filter in the top bar — clicking a thread dims unrelated paragraphs
 - Post-it annotation cards that open inline on click
 - Diagram if the recording has a lineage or sequence worth visualizing
 - Organizing frame summary at the end
 
-See `for-claude.md` for the full technical spec to give Claude.
+See `for-claude.md` for the full instructions to give Claude, including how to establish a design direction before writing any code.
 
 ---
 
@@ -145,9 +145,23 @@ Things this workflow doesn't yet handle well:
 | File | What it is |
 |------|------------|
 | `index.html` | The first conversation — Kenyatta and Tricia, March 2026 |
-| `WORKFLOW.md` | This file |
-| `hosting-guide.md` | How to host your own version |
-| `for-claude.md` | Upload this to a new Claude chat to guide the build process |
+| `README.md` | This file — the workflow documentation |
+| `hosting-guide.md` | How to host your own version on GitHub Pages |
+| `for-claude.md` | Instructions for Claude — upload this to a new chat to guide the build |
+
+**Note on the two markdown files:** `README.md` (this file) is documentation for humans — it explains the process and philosophy. `for-claude.md` is written *to* Claude — upload it to a new Claude chat alongside your transcript and it will guide you through the build step by step. They're aimed at different readers and do different jobs.
+
+---
+
+## Getting the files
+
+To download any file from this repo:
+
+1. Click the filename
+2. Click the **Raw** button in the top right
+3. In your browser: **File → Save As** (or right-click → Save Page As)
+
+To download everything at once: click the green **Code** button on the main repo page, then **Download ZIP**.
 
 ---
 
